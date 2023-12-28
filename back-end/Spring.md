@@ -38,6 +38,6 @@
 
     <br>
 
-    3-1. `@Transactional(readOnly = true)`로 지정된 메서드 내에서 Dirty check가 동작할까요? 이유와 함께 설명해주세요.
+    3-1. **`@Transactional(readOnly = true)`로 지정된 메서드 내에서 Dirty check가 동작할까요? 이유와 함께 설명해주세요.**
 
   - 답 : 
