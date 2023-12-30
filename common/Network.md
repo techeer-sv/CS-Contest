@@ -147,11 +147,162 @@ TCP는 데이터 재전송을 염두에 두고 데이터를 교환하는 반면 
 
 ---
 
-2. **CORS란 무엇이고, 어떻게 구현할 수 있는지 최대한 자세하게 설명해주세요.**
+## 2. **CORS란 무엇이고, 어떻게 구현할 수 있는지 최대한 자세하게 설명해주세요.**
 
-- 답
+### CORS(Cross-Origin Resource Sharing)란 무엇인가요?
 
-<br>
+CORS(Cross-Origin Resource Sharing, 교차 출처 리소스 공유)는 서로 다른 출처의 자원들을 공유한다는 뜻으로, 웹페이지가 다른 도메인의 리소스에 접근할 수 있도록 허용하는 보안 메커니즘입니다. 웹 보안 정책인 Same-Origin Policy에 의해, 브라우저는 기본적으로 다른 출처(Origin)의 서버로 HTTP 요청을 보내는 것을 제한합니다. 여기서 '출처'는 프로토콜, 도메인, 포트 번호의 조합을 의미합니다.
+
+아래와 같은 URL이 있다고 가정해봅시다
+
+- `https://` `time-map-installer.tistory.com` `:352` `/265` `?page=1` `#Personal`
+
+이 URL의 구성을 보고 정리를 해보자면 다음과 같다고 볼 수 있습니다.
+
+- `https://` : Protocol
+- `time-map-installer.tistory.com` : Host
+- `:352` : Port(생략 가능)
+- `/265` : Path
+- `?page=1` : Query String
+- `#Personal` : Fragment
+
+이걸 왜 정리했냐 한다면 바로 동일 출처가 무엇인지를 설명하기 위함입니다.
+여기서 동일 출처(Origin)는 "Protocol + Host + Port"가 같다면 동일 출처라고 합니다.
+
+그렇게 `http://example.com`의 웹 페이지가 `http://api.different.com`에서 데이터를 요청하려 할 때, 이는 다른 출처의 URL로 요청을 보내는 것이므로 cross-origin 요청으로 간주됩니다. CORS는 브라우저의 리소스를 다른 Origin으로부터 로드하지 못하게 하면서 이러한 요청을 안전하게 수행할 수 있도록 해줍니다. 서버는 특정 HTTP 헤더를 통해 브라우저에게 다른 출처의 요청을 허용할지 여부를 알려줍니다.
+
+### CORS의 작동 방식은 무엇인가요?
+
+CORS의 작동 방식은 크게 세 가지로 나뉩니다. 단순요청인 Simple Request, 안전성을 미리 검사하는 Preflight Request, 그리고 신뢰할 수 있는지에 대한 Credentialed Request로 나뉘어 있습니다.
+
+1. Simple Request
+
+   1. 서버로 요청을 한다.
+   2. 서버의 응답이 왔을 때, 브라우저에서 요청한 Origin과 Access-Control-Request-Header의 값을 비교하여 유효한 요청이면 응답하고, 유효하지 않은 요청이라면 에러를 발생한다.
+
+   - 가능한 HTTP method
+     - GET, HEAD, POST 요청만 가능하다.
+   - 가능한 Content-Type
+     - application/x-www-form-urlencoded
+     - multipart/form-data
+     - text/plain
+
+2. Preflight Request
+
+   1. **Preflight 요청 보내기** : 브라우저는 서버에 `OPTIONS` 메서드를 사용하여 특별한 요청을 보낸다. 이 요청에는 실제 보내려는 요청의 정보가 담긴 헤더가 포함된다.
+      - Origin : 어디서 요청을 했는 지 서버에 알려주는 주소
+      - Access-Control-Request-Method : 실제 요청이 보낼 HTTP 메서드
+      - Access-Control-Request-Headers : 실제 요청에 포함된 header
+   2. **브라우저의 검사** : 서버의 응답을 받은 브라우저는 이 정보를 검토하여 요청이 안전한지 확인한다.
+      - **유효한 요청일 경우** : 브라우저는 실제 요청을 서버에 보낸다.
+      - **유효하지 않은 요청일 경우** : 브라우저는 요청을 중단하고 에러를 발생시킨다.
+
+   - 서버의 응답 헤더
+     - Access-Control-Allow-Origin `<origin>`
+       - 해당 출처의 접근을 허용할지를 결정한다.
+       - 모든 출처를 허용하려면 `*`를 사용한다. <- 마치 프로그래밍의 `Import *` 같은 느낌이다.
+     - Access-Control-Expose-Headers `<headers>`
+       - 브라우저가 접근할 수 있는 서버의 특정 헤더를 명시한다.
+     - Access-Control-Max-Age `<seconds>`
+       - preflight 요청의 결과를 얼마나 오랫동안 캐시할지를 지정한다.
+     - Access-Control-Allow-Credentials
+       - 쿠키와 같은 요소들이 있는 요청에 대한 응답을 브라우저가 읽을 수 있게 할지를 결정한다.
+     - Access-Control-Allow-Methods `<methods>`
+       - 실제 요청에서 허용되는 HTTP 메서드를 나타낸다.
+     - Access-Control-Allow-Headers `<headers>`
+       - 실제 요청에서 사용할 수 있는 HTTP 헤더를 나타낸다.
+
+3. Credentialed Request
+   - 사용자의 인증 정보(예: 쿠키, HTTP 인증 헤더, TLS 클라이언트 인증서)를 포함하여 다른 출처로 HTTP 요청을 보내는 것
+   - 기본적으로, CORS 정책은 보안상의 이유로 다른 출처의 요청에 이러한 인증 정보를 포함하는 것을 허용하지 않으며, 아래와 같은 조건들을 만족시켜야 가능하다.
+   1. **클라이언트 설정**: 클라이언트 측에서 요청을 보낼 때, `withCredentials` 속성을 `true`로 설정해야한다.
+   2. **서버 설정**: 서버는 `Access-Control-Allow-Credentials` 헤더를 `true`로 설정하여 인증 정보 포함 요청을 허용해야 하며, `Access-Control-Allow-Origin` 헤더에 구체적인 출처를 명시해야 한다.
+
+### CORS(Cross-Origin Resource Sharing)는 어떻게 구현할 수 있나요?
+
+이를 구현하기 위해서는 클라이언트 측과 서버 측 양쪽 모두에서 설정을 해주어야 합니다.
+
+우선 클라이언트 측의 설정입니다.
+클라이언트 측에서는 아래와 같이 Origin 필드를 추가해야 합니다.
+
+```
+Origin: https://xxx.co.kr
+```
+
+그리고 이를 XMLHttpRequest(XHR), Fetch API, Axios 중 어떤 것을 사용하느냐에 따라 조금씩 다르게 설정이 됩니다.
+
+1. XMLHttpRequest(XHR) 사용 시
+   - withCredentials 속성을 true로 설정하여 쿠키와 인증 헤더를 포함할 수 있다.
+
+```js
+var xhr = new XMLHttpRequest();
+xhr.open("GET", "https://xxx.co.kr", true);
+xhr.withCredentials = true;
+xhr.send(null);
+```
+
+2. Fetch API 사용 시
+   - cors mode를 설정할 필요가 있다.
+   - 여기서도 credentials 옵션을 include로 설정하여 쿠키와 인증 헤더를 포함할 수 있다.
+
+```javascript
+fetch("https://xxx.co.kr", {
+  method: "GET",
+  mode: "cors",
+  credentials: "include", // 쿠키를 포함하기 위해 설정
+});
+```
+
+3. Axois 사용 시
+   - XHR의 방법처럼 withCredentials를 true로 설정하여 쿠키와 인증 헤더를 포함할 수 있다.
+
+```js
+axios.get("https://xxx.co.kr", {
+  withCredentials: true,
+});
+```
+
+클라이언트의 설정이 모두 끝났다면 다음은 서버 측에서 설정을 해야합니다.
+설정할 CORS 헤더는 위의 Preflight Request에서 다룬 서버의 응답 헤더와 같습니다.
+
+Node.js의 Express 프레임워크를 사용할 경우 다음과 같이 구현할 수 있습니다.(GPT 생성)
+
+```javascript
+const express = require("express");
+const cors = require("cors");
+
+const app = express();
+
+app.use(
+  cors({
+    origin: "https://xxx.co.kr", // 특정 출처 허용
+    methods: "GET,POST", // 허용할 메서드
+    credentials: true, // 쿠키 허용
+    allowedHeaders:
+      "X-Requested-With, Origin, X-Csrftoken, Content-Type, Accept",
+  })
+);
+
+app.get("/", function (req, res, next) {
+  res.json({ msg: "This is CORS-enabled for only https://xxx.co.kr." });
+});
+
+app.listen(80, function () {
+  console.log("CORS-enabled web server listening on port 80");
+});
+```
+
+**References**
+[CORS란 무엇인가?](https://hannut91.github.io/blogs/infra/cors)
+[CORS란 무엇인가?](https://escapefromcoding.tistory.com/724)
+[CORS란 무엇인가?](https://velog.io/@pwk921110/CORS%EB%9E%80-%EB%AC%B4%EC%97%87%EC%9D%B8%EA%B0%80)
+[CORS 개념 정리(preflight, simple, credentialed request)+SOP](https://velog.io/@wiostz98kr/CORS%EC%9D%98-%EB%AA%A8%EB%93%A0-%EA%B2%83)
+[Cross-Origin Resource Sharing (CORS)](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS)
+[CORS(Cross-origin Resource Sharing)의 구현](https://velog.io/@josworks27/CORS-%EA%B5%AC%ED%98%84-%EB%B0%A9%EB%B2%95)
+[교차 출처 리소스 공유 (CORS)](https://developer.mozilla.org/ko/docs/Web/HTTP/CORS)
+[🌐 악명 높은 CORS 개념 & 해결법 - 정리 끝판왕 👏](https://inpa.tistory.com/entry/WEB-%F0%9F%93%9A-CORS-%F0%9F%92%AF-%EC%A0%95%EB%A6%AC-%ED%95%B4%EA%B2%B0-%EB%B0%A9%EB%B2%95-%F0%9F%91%8F)
+[CORS의 이해와 올바른 구현을 위한 가이드](https://pallycon.com/ko/blog/cors%EC%9D%98-%EC%9D%B4%ED%95%B4%EC%99%80-%EC%98%AC%EB%B0%94%EB%A5%B8-%EA%B5%AC%ED%98%84%EC%9D%84-%EC%9C%84%ED%95%9C-%EA%B0%80%EC%9D%B4%EB%93%9C/)
+[CORS에서 이기는 방법](https://ui.toast.com/weekly-pick/ko_20211110)
 
 ---
 
