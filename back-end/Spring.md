@@ -27,7 +27,7 @@ Controller 클래스 위에 @RequestMapping 을 표시하면 어노테이션을 
 ---
 2. **DI, IoC, AOP, PSA에 대해 설명하고, Spring이 각각을 가져가는 이유에 대해 설명해주세요.**
 
-- 답 :
+답 :
 
 **DI**
 
