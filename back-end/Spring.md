@@ -75,10 +75,10 @@ PSA는 프레임워크가 다양한 기술로 구현할 수 있는 인터페이�
     }
     ```
 
-- 답 : 
+- 답 : makeAccount 메서드는 @Transactional 어노테이션이 적용되어 있어 트랜잭션 관리가 이루어집니다. 따라서 makeAccount 메서드가 실패할 경우 해당 메서드는 롤백되어 모든 변경 사항이 취소됩니다. 추가로 register 메서드에도 @Transactional 어노테이션이 적용되어 있기 때문에 makeAccount(account) 가 실패함에 따라 register 메서드도 롤백이 진행되게 되어 userRepository.save(user); 을 통해 저장된 객체 또한 저장 이전 상태로 되돌아가게 됩니다.  결국, register 메서드의 실행은 실패로 종료되며, User 객체의 저장 및 Account 객체의 생성 및 저장이 모두 롤백되어 시스템은 이전 상태로 복구됩니다.
 
     <br>
 
     3-1. **`@Transactional(readOnly = true)`로 지정된 메서드 내에서 Dirty check가 동작할까요? 이유와 함께 설명해주세요.**
 
-  - 답 : 
+  - 답 : Dirty check는 영속성 컨텍스트에서의 변경을 감지하는 매커니즘인데, @Transactional(readOnly = true) 로 지정될 경우 트랜잭션이 읽기 전용으로 표시되며, 그에 따라 읽기 작업만 수행하며 변경 사항을 커밋하지 않는데 그에 따라 변경 사항을 감지할 필요가 없기 때문에 Dirty check가 동작하지 않습니다. 하지만 @Transactional(readOnly = true) 을 사용한 메서드에서 프로그래머가 의도적으로 메서드 내 엔티티 변경 작업을 진행해도 Dirty check가 동작하지 않습니다. 이 점을 주의해야 합니다.
