@@ -21,4 +21,5 @@
    3-1. **DB에서 직접 동시성을 제어하는 방법과 어플리케이션 레벨에서 동시성을 제어하는 방법이 무엇이 있는지 각각 설명하고, 두 방법을 비교해주세요.**
 
    - 답 : DB: Through locking.
+         Application level: mutexes?
 
